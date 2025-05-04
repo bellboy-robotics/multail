@@ -108,7 +108,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.target }}
+          name: multail-${{ matrix.target }}
           path: target/${{ matrix.target }}/release/multail
 
   release:
@@ -126,10 +126,10 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            artifacts/x86_64-unknown-linux-gnu
-            artifacts/aarch64-unknown-linux-gnu
-            artifacts/x86_64-apple-darwin
-            artifacts/aarch64-apple-darwin
+            multail-x86_64-unknown-linux-gnu
+            multail-aarch64-unknown-linux-gnu
+            multail-x86_64-apple-darwin
+            multail-aarch64-apple-darwin
           generate_release_notes: true
           draft: false
           prerelease: false
