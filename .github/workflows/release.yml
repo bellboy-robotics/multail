@@ -133,4 +133,5 @@ jobs:
           generate_release_notes: true
           draft: false
           prerelease: false
-          tag_name: ${{ needs.version.outputs.next_version }} 
+          tag_name: ${{ needs.version.outputs.next_version }}
+          token: ${{ secrets.GITHUB_TOKEN }} 
