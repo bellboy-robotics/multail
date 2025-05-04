@@ -1,0 +1,15 @@
+[package]
+name = "lv-rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "A terminal-based log viewer"
+
+[dependencies]
+crossterm = "0.27"  # For terminal UI
+tui = "0.19"        # For building the TUI
+walkdir = "2.4"     # For recursive directory traversal
+regex = "1.10"      # For log parsing
+chrono = "0.4"      # For timestamp handling
+colored = "2.1"     # For colored output
+notify = "6.1"      # For file watching
