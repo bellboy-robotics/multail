@@ -138,12 +138,9 @@ impl UI {
             };
 
             let log_list = List::new(log_items)
-                .block(Block::default())
-                .highlight_style(if !is_file_list_focused {
-                    Style::default().bg(Color::Blue).fg(Color::White)
-                } else {
-                    Style::default()
-                });
+                .block(Block::default()
+                    .title(scroll_indicator)
+                    .borders(Borders::ALL));
             f.render_stateful_widget(log_list, chunks[1], &mut self.log_list_state);
         })?;
         Ok(())

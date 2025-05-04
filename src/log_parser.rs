@@ -2,9 +2,9 @@ use regex::Regex;
 
 #[derive(Debug, Clone)]
 pub struct LogEntry {
-    pub timestamp: String,
+    pub _timestamp: String,
     pub level: LogLevel,
-    pub message: String,
+    pub _message: String,
     pub lines: Vec<String>,
 }
 
@@ -27,7 +27,7 @@ impl LogLevel {
         }
     }
 
-    pub fn color(&self) -> &'static str {
+    pub fn _color(&self) -> &'static str {
         match self {
             LogLevel::Debug => "\x1b[90m",  // Gray
             LogLevel::Info => "\x1b[37m",   // White
@@ -59,9 +59,9 @@ impl LogParser {
 
                 if let Some(level) = LogLevel::from_str(&caps[2]) {
                     current_entry = Some(LogEntry {
-                        timestamp: caps[1].to_string(),
+                        _timestamp: caps[1].to_string(),
                         level,
-                        message: caps[3].to_string(),
+                        _message: caps[3].to_string(),
                         lines: vec![line.to_string()],
                     });
                 }
@@ -70,9 +70,9 @@ impl LogParser {
             } else {
                 // If no current entry and line doesn't match regex, create a new entry
                 entries.push(LogEntry {
-                    timestamp: "".to_string(),
+                    _timestamp: "".to_string(),
                     level: LogLevel::Debug,
-                    message: line.to_string(),
+                    _message: line.to_string(),
                     lines: vec![line.to_string()],
                 });
             }
