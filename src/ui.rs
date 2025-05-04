@@ -19,7 +19,7 @@ pub struct UI {
     terminal: Terminal<CrosstermBackend<io::Stdout>>,
     pub file_list_state: ListState,
     pub log_list_state: ListState,
-    expanded_entries: std::collections::HashSet<usize>,
+    pub expanded_entries: std::collections::HashSet<usize>,
     log_scroll_offset: u16,
 }
 
@@ -80,13 +80,17 @@ impl UI {
                         LogLevel::Error => Style::default().fg(Color::Red),
                     };
                     if is_expanded {
-                        entry.lines.iter().map(|line| {
+                        entry.lines.iter().enumerate().map(|(i, line)| {
                             let line = if self.log_scroll_offset > 0 {
                                 line.chars().skip(self.log_scroll_offset as usize).collect::<String>()
                             } else {
                                 line.clone()
                             };
-                            ListItem::new(Spans::from(vec![Span::styled(line, style)]))
+                            let mut spans = vec![Span::styled(line, style)];
+                            if i == 0 && entry.lines.len() > 1 {
+                                spans.push(Span::styled(" ▼", Style::default().fg(Color::Cyan)));
+                            }
+                            ListItem::new(Spans::from(spans))
                         }).collect::<Vec<_>>()
                     } else {
                         let mut line = entry.lines[0].clone();
@@ -95,7 +99,7 @@ impl UI {
                         }
                         let mut spans = vec![Span::styled(line, style)];
                         if entry.lines.len() > 1 {
-                            spans.push(Span::styled(" ⋯", Style::default().fg(Color::Cyan)));
+                            spans.push(Span::styled(" ▶", Style::default().fg(Color::Cyan)));
                         }
                         vec![ListItem::new(Spans::from(spans))]
                     }
@@ -104,7 +108,7 @@ impl UI {
 
             // Add scroll indicator to the title
             let scroll_indicator = if self.log_scroll_offset > 0 {
-                format!(" Logs (← {})", self.log_scroll_offset)
+                format!(" Logs (← {} →)", self.log_scroll_offset)
             } else {
                 " Logs".to_string()
             };
@@ -125,11 +129,13 @@ impl UI {
         if event::poll(std::time::Duration::from_millis(100))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
-                    KeyCode::Char('q') | KeyCode::Esc => return Ok(Some(UIEvent::Quit)),
+                    KeyCode::Char('q') => return Ok(Some(UIEvent::Quit)),
+                    KeyCode::Esc => return Ok(Some(UIEvent::SwitchToFileList)),
+                    KeyCode::Enter => return Ok(Some(UIEvent::SwitchToLogView)),
                     KeyCode::Up => return Ok(Some(UIEvent::Up)),
                     KeyCode::Down => return Ok(Some(UIEvent::Down)),
-                    KeyCode::Left => return Ok(Some(UIEvent::Left)),
-                    KeyCode::Right => return Ok(Some(UIEvent::Right)),
+                    KeyCode::Left => return Ok(Some(UIEvent::ScrollLeft)),
+                    KeyCode::Right => return Ok(Some(UIEvent::ScrollRight)),
                     KeyCode::Char(' ') => return Ok(Some(UIEvent::ToggleExpand)),
                     KeyCode::Char('t') => return Ok(Some(UIEvent::ToggleTail)),
                     KeyCode::Char('h') => return Ok(Some(UIEvent::ScrollLeft)),
@@ -161,12 +167,12 @@ impl UI {
 
     pub fn scroll_log_left(&mut self) {
         if self.log_scroll_offset > 0 {
-            self.log_scroll_offset = self.log_scroll_offset.saturating_sub(10);
+            self.log_scroll_offset = self.log_scroll_offset.saturating_sub(4);
         }
     }
 
     pub fn scroll_log_right(&mut self) {
-        self.log_scroll_offset = self.log_scroll_offset.saturating_add(10);
+        self.log_scroll_offset = self.log_scroll_offset.saturating_add(4);
     }
 
     pub fn reset_scroll(&mut self) {
@@ -184,4 +190,6 @@ pub enum UIEvent {
     ToggleTail,
     ScrollLeft,
     ScrollRight,
+    SwitchToFileList,
+    SwitchToLogView,
 } 

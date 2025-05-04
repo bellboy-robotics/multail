@@ -93,12 +93,24 @@ impl LogViewer {
 
     fn handle_log_list_navigation(&mut self, up: bool) -> io::Result<()> {
         let selected = self.ui.log_list_state.selected();
+        
+        // Calculate total number of visible lines including expanded entries
+        let total_visible_lines = self.log_entries.iter().enumerate()
+            .map(|(i, entry)| {
+                if self.ui.expanded_entries.contains(&i) {
+                    entry.lines.len()
+                } else {
+                    1
+                }
+            })
+            .sum::<usize>();
+
         let new_selected = match selected {
             Some(selected) => {
                 if up {
                     if selected > 0 { selected - 1 } else { selected }
                 } else {
-                    if selected < self.log_entries.len() - 1 { selected + 1 } else { selected }
+                    if selected < total_visible_lines - 1 { selected + 1 } else { selected }
                 }
             }
             None => if !self.log_entries.is_empty() { 0 } else { 0 },
@@ -107,7 +119,7 @@ impl LogViewer {
         if new_selected != selected.unwrap_or(0) {
             self.ui.log_list_state.select(Some(new_selected));
             // Only disable tail mode if we're not at the last entry
-            if new_selected < self.log_entries.len() - 1 {
+            if new_selected < total_visible_lines - 1 {
                 self.is_tailing = false;
             } else {
                 self.is_tailing = true;
@@ -133,15 +145,37 @@ impl LogViewer {
                 }
             }
             UIEvent::Left => {
-                self.is_file_list_focused = true;
+                if !self.is_file_list_focused {
+                    self.ui.scroll_log_left();
+                }
             }
             UIEvent::Right => {
+                if !self.is_file_list_focused {
+                    self.ui.scroll_log_right();
+                }
+            }
+            UIEvent::SwitchToFileList => {
+                self.is_file_list_focused = true;
+            }
+            UIEvent::SwitchToLogView => {
                 self.is_file_list_focused = false;
             }
             UIEvent::ToggleExpand => {
                 if !self.is_file_list_focused {
-                    if let Some(index) = self.ui.log_list_state.selected() {
-                        self.ui.toggle_expand(index);
+                    if let Some(selected_line) = self.ui.log_list_state.selected() {
+                        // Map the selected line index back to the log entry index
+                        let mut entry_index = 0;
+                        let mut line_count = 0;
+                        for (i, entry) in self.log_entries.iter().enumerate() {
+                            let is_expanded = self.ui.expanded_entries.contains(&i);
+                            let lines = if is_expanded { entry.lines.len() } else { 1 };
+                            if selected_line < line_count + lines {
+                                entry_index = i;
+                                break;
+                            }
+                            line_count += lines;
+                        }
+                        self.ui.toggle_expand(entry_index);
                     }
                 }
             }
