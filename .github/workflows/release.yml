@@ -125,11 +125,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            multail-x86_64-unknown-linux-gnu
-            multail-aarch64-unknown-linux-gnu
-            multail-x86_64-apple-darwin
-            multail-aarch64-apple-darwin
+          files: artifacts/**/*
           generate_release_notes: true
           draft: false
           prerelease: false
