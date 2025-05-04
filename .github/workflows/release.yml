@@ -126,10 +126,10 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            artifacts/x86_64-unknown-linux-gnu/multail
-            artifacts/aarch64-unknown-linux-gnu/multail
-            artifacts/x86_64-apple-darwin/multail
-            artifacts/aarch64-apple-darwin/multail
+            artifacts/x86_64-unknown-linux-gnu
+            artifacts/aarch64-unknown-linux-gnu
+            artifacts/x86_64-apple-darwin
+            artifacts/aarch64-apple-darwin
           generate_release_notes: true
           draft: false
           prerelease: false
