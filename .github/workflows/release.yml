@@ -119,15 +119,11 @@ jobs:
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
-        with:
-          path: artifacts
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts/**/*
+          files: multail-*
           generate_release_notes: true
           draft: false
           prerelease: false
-          tag_name: ${{ needs.version.outputs.next_version }}
-          token: ${{ secrets.GITHUB_TOKEN }} 
