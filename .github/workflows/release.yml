@@ -2,16 +2,53 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'  # Trigger on version tags like v0.1.0
+    branches:
+      - main
 
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: '-C target-feature=+crt-static'
 
 jobs:
+  version:
+    name: Determine Next Version
+    runs-on: ubuntu-latest
+    outputs:
+      next_version: ${{ steps.version.outputs.next_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag
+        id: tag
+        run: |
+          git fetch --tags
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
+
+      - name: Calculate next version
+        id: version
+        run: |
+          latest_tag=${{ steps.tag.outputs.latest_tag }}
+          # Remove 'v' prefix and split into components
+          version=${latest_tag#v}
+          IFS='.' read -r major minor patch <<< "$version"
+          # Increment minor version
+          next_minor=$((minor + 1))
+          next_version="v${major}.${next_minor}.0"
+          echo "next_version=$next_version" >> $GITHUB_OUTPUT
+
+      - name: Create and push tag
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git tag ${{ steps.version.outputs.next_version }}
+          git push origin ${{ steps.version.outputs.next_version }}
+
   build:
     name: Build Release
+    needs: version
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -62,9 +99,8 @@ jobs:
 
   release:
     name: Create Release
-    needs: build
+    needs: [version, build]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
 
     steps:
       - name: Download all artifacts
@@ -82,4 +118,5 @@ jobs:
             artifacts/aarch64-apple-darwin/multail
           generate_release_notes: true
           draft: false
-          prerelease: false 
+          prerelease: false
+          tag_name: ${{ needs.version.outputs.next_version }} 
