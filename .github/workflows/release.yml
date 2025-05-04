@@ -55,7 +55,7 @@ jobs:
           CARGO_TERM_COLOR: always
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}
           path: target/${{ matrix.target }}/release/multail
