@@ -145,12 +145,20 @@ impl LogViewer {
                 }
             }
             UIEvent::Left => {
-                if !self.is_file_list_focused {
+                if self.is_file_list_focused {
+                    // Do nothing in file list
+                } else if self.ui.is_at_beginning() {
+                    // If at the beginning of the lines, switch to file list
+                    self.is_file_list_focused = true;
+                } else {
+                    // Otherwise scroll left
                     self.ui.scroll_log_left();
                 }
             }
             UIEvent::Right => {
-                if !self.is_file_list_focused {
+                if self.is_file_list_focused {
+                    self.is_file_list_focused = false;
+                } else {
                     self.ui.scroll_log_right();
                 }
             }

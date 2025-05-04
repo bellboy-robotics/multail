@@ -53,19 +53,43 @@ impl UI {
                 .constraints([Constraint::Percentage(10), Constraint::Percentage(90)].as_ref())
                 .split(f.size());
 
+            // Create a custom area for the file list that's one character narrower
+            let file_list_area = chunks[0];
+            let file_list_area = tui::layout::Rect {
+                x: file_list_area.x,
+                y: file_list_area.y,
+                width: file_list_area.width.saturating_sub(1),
+                height: file_list_area.height,
+            };
+
             // File list
             let file_items: Vec<ListItem> = files
                 .iter()
-                .map(|f| ListItem::new(f.file_name().unwrap().to_string_lossy().to_string()))
+                .enumerate()
+                .map(|(i, f)| {
+                    let file_name = f.file_name().unwrap().to_string_lossy().to_string();
+                    let style = if !is_file_list_focused && self.file_list_state.selected() == Some(i) {
+                        Style::default().fg(Color::White)
+                    } else {
+                        Style::default()
+                    };
+                    ListItem::new(Span::styled(file_name, style))
+                })
                 .collect();
             let file_list = List::new(file_items)
-                .block(Block::default().borders(Borders::ALL).title("Files"))
+                .block(Block::default())
                 .highlight_style(if is_file_list_focused {
                     Style::default().bg(Color::Blue).fg(Color::White)
                 } else {
                     Style::default()
                 });
-            f.render_stateful_widget(file_list, chunks[0], &mut self.file_list_state);
+            f.render_stateful_widget(file_list, file_list_area, &mut self.file_list_state);
+
+            // Add a vertical line between the panels
+            let vertical_line = Block::default()
+                .borders(Borders::RIGHT)
+                .border_style(Style::default().fg(Color::DarkGray));
+            f.render_widget(vertical_line, chunks[0]);
 
             // Log entries
             let log_items: Vec<ListItem> = log_entries
@@ -114,7 +138,7 @@ impl UI {
             };
 
             let log_list = List::new(log_items)
-                .block(Block::default().borders(Borders::ALL).title(scroll_indicator))
+                .block(Block::default())
                 .highlight_style(if !is_file_list_focused {
                     Style::default().bg(Color::Blue).fg(Color::White)
                 } else {
@@ -134,8 +158,8 @@ impl UI {
                     KeyCode::Enter => return Ok(Some(UIEvent::SwitchToLogView)),
                     KeyCode::Up => return Ok(Some(UIEvent::Up)),
                     KeyCode::Down => return Ok(Some(UIEvent::Down)),
-                    KeyCode::Left => return Ok(Some(UIEvent::ScrollLeft)),
-                    KeyCode::Right => return Ok(Some(UIEvent::ScrollRight)),
+                    KeyCode::Left => return Ok(Some(UIEvent::Left)),
+                    KeyCode::Right => return Ok(Some(UIEvent::Right)),
                     KeyCode::Char(' ') => return Ok(Some(UIEvent::ToggleExpand)),
                     KeyCode::Char('t') => return Ok(Some(UIEvent::ToggleTail)),
                     KeyCode::Char('h') => return Ok(Some(UIEvent::ScrollLeft)),
@@ -177,6 +201,10 @@ impl UI {
 
     pub fn reset_scroll(&mut self) {
         self.log_scroll_offset = 0;
+    }
+
+    pub fn is_at_beginning(&self) -> bool {
+        self.log_scroll_offset == 0
     }
 }
 
